@@ -1,0 +1,81 @@
+---
+title: "PA1_template"
+author: "Michael O'Connor"
+date: "January 10, 2016"
+output: html_document
+---
+# Course Project 1
+
+1. Code for reading in the dataset and/or processing the data. 
+
+```{r}
+activity <-read.csv("activity.csv")
+Nbr_Missing_Rows <- is.na(activity$steps)
+```
+
+2. Calculate & report total, mean and median number of steps taken per day
+NOTE: For these calculations, we'll ignore the missing values in the dataset
+
+Histogram of the total steps for each day (with NA data removed)
+
+
+```{r}
+steps_day <- aggregate(activity$steps, by=list(date=activity$date), FUN=sum)
+names(steps_day)[2]="steps"
+total_steps <- sum(steps_day$steps, na.rm = TRUE)
+mean_steps <- mean(steps_day$steps, na.rm = TRUE)
+median_steps <- median(steps_day$steps, na.rm = TRUE)
+mean_interval_steps <- as.integer(mean_steps/288)
+sprintf("Total Steps = %g; Mean Steps per day = %7.2f Median Steps per day =  %g",total_steps, mean_steps,median_steps)
+hist(steps_day$steps,breaks=6,main="Histogram of steps per day",xlab="Number of Steps")
+```
+
+
+3. Handle NA values. I used a simple approach of replacing Step NAs with Mean of Steps/Interval
+* Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with 𝙽𝙰s)
+* Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+* Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+```{r}
+Missing_Dates <- unique(activity$date[Nbr_Missing_Rows])
+sprintf("Number of Missing Values in Dataset =  %g",sum(Nbr_Missing_Rows))
+print("Missing Dates:")
+sprintf("%s",as.character(Missing_Dates))
+activity2 <- activity      #New dataset
+activity2$steps[Nbr_Missing_Rows]<- mean_interval_steps  #replace step NA with mean  
+
+```
+
+
+3. What is the average daily activity pattern (per 5-minute interval)?
+NOTE: This section uses new dataset (activity2)
+* Make a time series plot (i.e. 𝚝𝚢𝚙𝚎 = "𝚕") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+* Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+```{r}
+steps_interval_day <-aggregate(activity2$steps,by=list(interval=activity2$interval), FUN=mean)
+names(steps_interval_day)[2]="steps_int"
+plot(c(0:287), steps_interval_day$steps_int, xlab="Interval",ylab="Average Steps",main="Average Steps per Interval", type="l")
+interval_location<- which.max(steps_interval_day$steps_int)
+sprintf("The 5-minute interval that on average contains maximum steps is %g", interval_location)
+```
+
+4. Recalculate and plot using new dataset (activity2 - contains mean data in place of NA)
+Calculate and report the mean and median total number of steps taken per day. 
+
+
+```{r}
+steps_day2 <- aggregate(activity2$steps, by=list(date=activity2$date), FUN=sum)
+names(steps_day2)[2]="steps"
+total_steps2 <- sum(steps_day2$steps)
+mean_steps2 <- mean(steps_day2$steps)
+median_steps2 <- median(steps_day2$steps)
+sprintf("Recalculated Total Steps = %g; Mean Steps per day = %7.2f Median Steps per day =  %g",total_steps2, mean_steps2,median_steps2)
+hist(steps_day2$steps,breaks=6,main="Histogram of RECALCULATED steps per day",xlab="Number of Steps")
+
+```
+
+# Results & Discussion
+ - ANSWER: Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+ 
+There are 2304 NA entries for steps [see Chuck 3], which corresponds to 8 days of NA data.   The initial calculations were done with NA data removed.   To impute the missing step data I simply used the mean of steps per interval for the NA data.    As one would expect, this increases the total of steps during the 61 day period.   There is no change to the mean data (as that is what was used to substitute for the).  The median is shifted and the histogram plot shows that there is a frequency increase based again on the addition of 8 days now having mean data (instead of being removed from the calculation)
+
